@@ -1,46 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-/*
-**    Copyright (C) 2010 Stewart Gateley <birbeck@gmail.com>
-**
-**    This program is free software: you can redistribute it and/or modify
-**    it under the terms of the GNU General Public License as published by
-**    the Free Software Foundation, either version 3 of the License, or
-**    (at your option) any later version.
-**
-**    This program is distributed in the hope that it will be useful,
-**    but WITHOUT ANY WARRANTY; without even the implied warranty of
-**    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-**    GNU General Public License for more details.
-**
-**    You should have received a copy of the GNU General Public License
-**    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+    Copyright (C) 2010 Stewart Gateley <birbeck@gmail.com>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-	android:title="@string/app_name"
-	android:key="wallpapersettings">
+	android:title="@string/app_name" android:key="wallpapersettings">
 
-	<Preference
-		android:key="path"
-		android:title="Folder"
-		android:summary="The folder containing images"
-		android:defaultValue="/sdcard/DCIM/100MEDIA">
-	   <intent android:action="com.birbeck.wallpaperslideshow.SELECT_FOLDER_ACTIVITY" />
+	<Preference android:key="path" android:title="Folder"
+		android:summary="The folder containing images" android:defaultValue="/sdcard/DCIM/100MEDIA">
+		<intent android:action="com.birbeck.wallpaperslideshow.SELECT_FOLDER_ACTIVITY" />
 	</Preference>
 
-	<ListPreference
-		android:key="duration"
-		android:title="Duration"
-		android:summary="Time between each image"
-		android:entries="@array/wallpaper_durations"
+	<ListPreference android:key="duration" android:title="Duration"
+		android:summary="Time between each image" android:entries="@array/wallpaper_durations"
 		android:entryValues="@array/wallpaper_durations_values"
 		android:defaultValue="60000" />
 
-	<CheckBoxPreference
-		android:key="rotate"
-		android:title="Rotate"
-		android:summary="Rotate pictures when orientation differs"
+	<CheckBoxPreference android:key="rotate"
+		android:title="Rotate" android:summary="Rotate pictures when orientation differs"
 		android:defaultValue="false" />
 
 </PreferenceScreen>
