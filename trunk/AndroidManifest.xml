@@ -16,15 +16,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.birbeck.wallpaperslideshow" android:installLocation="internalOnly"
-	android:versionName="0.1.1" android:versionCode="3">
+	package="com.birbeck.wallpaperslideshow" android:versionName="0.1.4"
+	android:versionCode="8">
 
-	<application android:label="@string/app_name"
-		android:debuggable="false" android:icon="@drawable/icon">
-		<activity android:name=".WallpaperSettings" android:label="Configure Wallpaper" />
-		<activity android:name=".SelectFolderActivity" android:label="Select folder" />
-		<service android:name=".WallpaperMain" android:icon="@drawable/icon"
-			android:label="@string/app_name" android:permission="android.permission.BIND_WALLPAPER">
+	<application android:label="@string/app_name" android:icon="@drawable/icon"
+		android:debuggable="false">
+		<activity android:name=".WallpaperSettings" android:label="Configure Wallpaper"
+			android:exported="true" />
+		<service android:name=".WallpaperMain" android:label="@string/app_name"
+			android:permission="android.permission.BIND_WALLPAPER">
 			<intent-filter>
 				<action android:name="android.service.wallpaper.WallpaperService" />
 			</intent-filter>

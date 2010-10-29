@@ -17,10 +17,28 @@
 
 package com.birbeck.wallpaperslideshow;
 
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.ArrayList;
+
+import android.app.ProgressDialog;
 import android.os.Bundle;
+import android.preference.ListPreference;
 import android.preference.PreferenceActivity;
 
 public class WallpaperSettings extends PreferenceActivity {
+	ProgressDialog mProgressDialog = null;
+	
+	ArrayList<String> dirs;
+	FilenameFilter imageFilter = new FilenameFilter() {
+		public boolean accept(File file, String string) {
+			string = string.toLowerCase();
+			if (string.endsWith(".jpg") || string.endsWith(".png")) {
+				return true;
+			}
+			return false;
+		}
+	};
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +46,25 @@ public class WallpaperSettings extends PreferenceActivity {
 		getPreferenceManager().setSharedPreferencesName(
 				WallpaperMain.SHARED_PREFS_NAME);
 		addPreferencesFromResource(R.xml.wallpaper_settings);
+		
+		mProgressDialog = ProgressDialog.show(WallpaperSettings.this, "", 
+                "Loading. Please wait...", true);
+		
+		new Thread() {
+			public void run() {
+				dirs = new ArrayList<String>();
+				traverse(new File("/sdcard"));
+				String[] filesStr = new String[dirs.size()];
+				for (int i = 0; i < dirs.size(); i++) {
+					filesStr[i] = dirs.get(i).toString();
+				}
+
+				ListPreference path = (ListPreference) findPreference("path");
+				path.setEntries(filesStr);
+				path.setEntryValues(filesStr);
+				mProgressDialog.dismiss();
+			}
+		}.start();		
 	}
 	
 	@Override
@@ -38,6 +75,24 @@ public class WallpaperSettings extends PreferenceActivity {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+	}
+	
+	private void traverse(File dir) {
+		if (dir.isDirectory()) {
+			String[] files = dir.list();
+			for (String file : files) {
+				if (file.startsWith(".")) {
+					continue;
+				}
+				if (!dirs.contains(dir.toString())) {
+					String[] images = dir.list(imageFilter);
+					if (images.length > 0) {
+						dirs.add(dir.toString());
+					}
+				}
+				traverse(new File(dir, file));
+			}
+		}
 	}
 
 }
