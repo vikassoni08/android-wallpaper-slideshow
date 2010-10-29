@@ -18,10 +18,9 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
 	android:title="@string/app_name" android:key="wallpapersettings">
 
-	<Preference android:key="path" android:title="Folder"
-		android:summary="The folder containing images" android:defaultValue="/sdcard/DCIM/100MEDIA">
-		<intent android:action="com.birbeck.wallpaperslideshow.SELECT_FOLDER_ACTIVITY" />
-	</Preference>
+	<ListPreference android:key="path" android:title="Folder"
+		android:id="@+id/path"
+		android:summary="The folder containing images" android:defaultValue="/sdcard/DCIM/100MEDIA" />
 
 	<ListPreference android:key="duration" android:title="Duration"
 		android:summary="Time between each image" android:entries="@array/wallpaper_durations"
@@ -29,7 +28,11 @@
 		android:defaultValue="60000" />
 
 	<CheckBoxPreference android:key="rotate"
-		android:title="Rotate" android:summary="Rotate pictures when orientation differs"
+		android:title="Rotate" android:summary="Rotate picture to match screen orientation"
+		android:defaultValue="false" />
+
+	<CheckBoxPreference android:key="random"
+		android:title="Random" android:summary="Choose picture at random from selected directory"
 		android:defaultValue="false" />
 
 </PreferenceScreen>

@@ -18,6 +18,7 @@
 package com.birbeck.wallpaperslideshow;
 
 import java.io.File;
+import java.io.FileFilter;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -37,13 +38,28 @@ public class SelectFolderActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mPrefs = this.getSharedPreferences(WallpaperMain.SHARED_PREFS_NAME, 0);
+		
+		File dir = new File("/sdcard");
+		FileFilter filter = new FileFilter() {
+			public boolean accept(File dir) {
+				return dir.isDirectory();
+			}
+		};
+		File[] files = dir.listFiles(filter);
+		
+		for (File file : files) {
+			System.out.println(file);
+		}
+		finish();
 
+		/*
 		setResult(RESULT_CANCELED);
 
 		Intent intent = new Intent(Intent.ACTION_PICK,
 				android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
 		intent.setType("image/*");
 		startActivityForResult(Intent.createChooser(intent, "Select folder"), 1);
+		*/
 	}
 
 	protected final void onActivityResult(final int requestCode,

@@ -42,6 +42,7 @@ public class WallpaperMain extends WallpaperService
 	private long duration;
 	private String path;
 	private boolean rotate;
+	private boolean random;
 
 	@Override
 	public Engine onCreateEngine() {
@@ -55,6 +56,7 @@ public class WallpaperMain extends WallpaperService
 		path = mPrefs.getString("path", "/sdcard/DCIM/100MEDIA");
 		duration = Long.parseLong(mPrefs.getString("duration", "60000"));
 		rotate = mPrefs.getBoolean("rotate", false);
+		random = mPrefs.getBoolean("rotate", false);
 		super.onCreate();
 	}
 	
@@ -68,6 +70,7 @@ public class WallpaperMain extends WallpaperService
 		path = mPrefs.getString("path", "/sdcard/DCIM/100MEDIA");
 		duration = Long.parseLong(mPrefs.getString("duration", "60000"));
 		rotate = mPrefs.getBoolean("rotate", false);
+		random = mPrefs.getBoolean("random", false);
 	}
 	
 	class WallpaperEngine extends Engine {
@@ -180,7 +183,6 @@ public class WallpaperMain extends WallpaperService
 					currentTime = System.currentTimeMillis();
 					if (currentTime - lastTime > duration) {
 						lastTime = currentTime;
-						this.index += 1;
 						this.redraw = true;
 					}
 					
@@ -197,8 +199,18 @@ public class WallpaperMain extends WallpaperService
 									bitmap = BitmapFactory.decodeResource(
 											getResources(), R.drawable.sdcard_error);
 								} else {
-									if (index >= files.length) index = 0;
-									bitmap = Util.decodeFile(files[index], width, height);
+									if (random) {
+										int rIndex;
+										do {
+											rIndex = (int)(Math.random() * files.length);
+										} while (rIndex == index);
+										bitmap = Util.decodeFile(files[rIndex], width, height);
+										index = rIndex;
+									} else {
+										if (++index >= files.length) index = 0;
+										bitmap = Util.decodeFile(files[index], width, height);
+									}
+									
 									
 									int screenOrientation = getResources().getConfiguration().orientation;
 									if (bitmap.getWidth() > bitmap.getHeight()
@@ -265,7 +277,7 @@ public class WallpaperMain extends WallpaperService
 
 			public void resumePainting() {
 				this.wait = false;
-				this.redraw = true;
+				// this.redraw = true;
 				synchronized (this) {
 					this.notify();
 				}
