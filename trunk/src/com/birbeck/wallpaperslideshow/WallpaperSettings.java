@@ -36,7 +36,7 @@ public class WallpaperSettings extends PreferenceActivity {
 	FilenameFilter imageFilter = new FilenameFilter() {
 		public boolean accept(File file, String string) {
 			string = string.toLowerCase();
-			if (string.endsWith(".jpg") || string.endsWith(".png")) {
+			if (string.endsWith(".jpg") || string.endsWith(".jpeg") || string.endsWith(".png")) {
 				return true;
 			}
 			return false;
