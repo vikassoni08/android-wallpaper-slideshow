@@ -165,7 +165,7 @@ public class WallpaperMain extends WallpaperService
 			private final FilenameFilter filter = new FilenameFilter() {
 				public boolean accept(File dir, String name) {
 					String ext = name.substring(name.lastIndexOf('.')+1, name.length());
-					if (ext.equals("jpg") || ext.equals("png")) {
+					if (ext.equals("jpg") || ext.equals("jpeg") ||ext.equals("png")) {
 						return true;
 					} else {
 						return false;
