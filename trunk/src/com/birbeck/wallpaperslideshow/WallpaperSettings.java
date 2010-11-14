@@ -18,6 +18,7 @@
 package com.birbeck.wallpaperslideshow;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 
@@ -25,9 +26,11 @@ import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.PreferenceActivity;
+import android.util.Log;
 
 public class WallpaperSettings extends PreferenceActivity {
 	ProgressDialog mProgressDialog = null;
+	private static final String TAG = "Wallpaper Slideshow";
 	
 	ArrayList<String> dirs;
 	FilenameFilter imageFilter = new FilenameFilter() {
@@ -36,6 +39,47 @@ public class WallpaperSettings extends PreferenceActivity {
 			if (string.endsWith(".jpg") || string.endsWith(".png")) {
 				return true;
 			}
+			return false;
+		}
+	};
+
+	FileFilter noMediaFilter = new FileFilter() {
+		public boolean accept(final File file) {
+			if (file.isDirectory()) {
+				// We can't access this directory
+				if (!file.canRead()) {
+					Log.d(TAG, file + " is not accessible");
+					return false;
+				}
+
+				// We don't want hidden directories
+				if (file.getName().startsWith(".")) {
+					Log.d(TAG, file + " is hidden");
+					return false;
+				}
+				
+				// We don't want directories containing .nomedia
+				final String[] files = file.list();
+				for (final String f : files) {
+					if (f.equalsIgnoreCase(".nomedia")) {
+						Log.d(TAG, file + " contains .nomedia");
+						return false;
+					}
+				}
+				
+				// We don't want directories containing only AlbumArt.jpg
+				final String[] images = file.list(imageFilter);
+				if (images.length == 1 &&
+						images[0].equalsIgnoreCase("AlbumArt.jpg")) {
+					Log.d(TAG, file + " contains only AlbumArt.jpg");
+					return false;
+				}
+
+				// Valid directory
+				return true;
+			}
+
+			// Not a directory
 			return false;
 		}
 	};
@@ -62,7 +106,9 @@ public class WallpaperSettings extends PreferenceActivity {
 				ListPreference path = (ListPreference) findPreference("path");
 				path.setEntries(filesStr);
 				path.setEntryValues(filesStr);
-				mProgressDialog.dismiss();
+				if (mProgressDialog != null && mProgressDialog.isShowing()) {
+					mProgressDialog.dismiss();
+				}
 			}
 		}.start();		
 	}
@@ -79,18 +125,15 @@ public class WallpaperSettings extends PreferenceActivity {
 	
 	private void traverse(File dir) {
 		if (dir.isDirectory()) {
-			String[] files = dir.list();
-			for (String file : files) {
-				if (file.startsWith(".")) {
-					continue;
-				}
-				if (!dirs.contains(dir.toString())) {
-					String[] images = dir.list(imageFilter);
-					if (images.length > 0) {
-						dirs.add(dir.toString());
+			final File[] files = dir.listFiles(noMediaFilter);
+			for (final File file : files) {
+				final String strFile = file.toString();
+				if (!dirs.contains(strFile)) {
+					if (file.list(imageFilter).length > 0) {
+						dirs.add(strFile);
 					}
 				}
-				traverse(new File(dir, file));
+				traverse(file);
 			}
 		}
 	}

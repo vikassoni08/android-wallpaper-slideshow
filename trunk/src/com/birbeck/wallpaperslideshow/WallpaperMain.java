@@ -30,7 +30,6 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.service.wallpaper.WallpaperService;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 
@@ -301,7 +300,6 @@ public class WallpaperMain extends WallpaperService
 
 			public void onSharedPreferenceChanged(
 					SharedPreferences sharedPreferences, String key) {
-				Log.d("Wallpaper Slideshow", key + " changed");
 				if (key.equals("path")) {
 					this.index = -1;
 					this.lastTime = 0;
