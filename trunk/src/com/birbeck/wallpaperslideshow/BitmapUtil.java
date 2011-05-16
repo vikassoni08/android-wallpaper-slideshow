@@ -1,45 +1,50 @@
 /*
- * Copyright (C) 2009 The Android Open Source Project
+ *    Copyright (C) 2010 Stewart Gateley <birbeck@gmail.com>
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package com.birbeck.wallpaperslideshow;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.FileFilter;
+import java.util.Collection;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Rect;
+import android.util.Log;
 
 /**
  * Collection of utility functions used in this package.
  */
-public class Util {
-    public static final int UNCONSTRAINED = -1;
+public class BitmapUtil {
+	public static final int UNCONSTRAINED = -1;
+    private static final String TAG = "BitmapUtil";
 
-    private Util() {
+    public BitmapUtil() {
     }
 
     // Rotates the bitmap by the specified degree.
     // If a new bitmap is created, the original bitmap is recycled.
-    public static Bitmap rotate(Bitmap b, int degrees) {
+    public static Bitmap rotate(Bitmap b, int degrees, Matrix m) {
         if (degrees != 0 && b != null) {
-            Matrix m = new Matrix();
+        	if (m == null) {
+        		m = new Matrix();
+        	}
             m.setRotate(degrees,
                     (float) b.getWidth() / 2, (float) b.getHeight() / 2);
             try {
@@ -51,6 +56,7 @@ public class Util {
                 }
             } catch (OutOfMemoryError ex) {
                 // We have no memory to rotate. Return the original bitmap.
+                Log.e(TAG, "Got oom exception ", ex);
             }
         }
         return b;
@@ -212,29 +218,71 @@ public class Util {
         return b2;
     }
 
-	public static Bitmap decodeFile(File file, int width, int height) {
-	    Bitmap bitmap = null;
-	    BitmapFactory.Options opts;
+    /**
+     * Make a bitmap from a given Uri.
+     *
+     * @param uri
+     */
+    public static Bitmap makeBitmap(int minSideLength, int maxNumOfPixels,
+            String pathName, BitmapFactory.Options options) {
+        try {
+            if (options == null) options = new BitmapFactory.Options();
 
-	    try {
-	        // Decode image size
-	        opts = new BitmapFactory.Options();
-	        opts.inJustDecodeBounds = true;
-	        BitmapFactory.decodeStream(
-	        		new FileInputStream(file), null, opts);
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(pathName, options);
+            if (options.mCancel || options.outWidth == -1
+                    || options.outHeight == -1) {
+                return null;
+            }
+            
+            options.inSampleSize = computeSampleSize(
+                    options, minSideLength, maxNumOfPixels);
+            options.inJustDecodeBounds = false;
+            //options.inDither = false;
+            //options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+            return BitmapFactory.decodeFile(pathName, options);
+        } catch (OutOfMemoryError ex) {
+            Log.e(TAG, "Got oom exception ", ex);
+            return null;
+        }
+    }
 
-	        // Compute sample size
-	        int scale = computeSampleSize(opts,
-	        		Math.max(width, height), width * height);
+    public static String getExtension(String name) {
+        String ext = null;
+        int i = name.lastIndexOf('.');
 
-	        // Decode scaled image
-	        opts = new BitmapFactory.Options();
-	        opts.inSampleSize = scale;
-	        bitmap = BitmapFactory.decodeStream(
-	        		new FileInputStream(file), null, opts);
-	    } catch (FileNotFoundException e) {}
+        if (i > 0 &&  i < name.length() - 1) {
+            ext = name.substring(i+1).toLowerCase();
+        }
+        
+        return ext;
+    }
+    
+    public static File[] listFiles(File directory, boolean recurse, FileFilter filter) {
+    	if (!recurse) {
+    		return directory.listFiles(filter);
+    	} else {
+    		Collection<File> mFiles = new java.util.LinkedList<File>();
+            innerListFiles(mFiles, directory, filter);
+            return (File[]) mFiles.toArray(new File[mFiles.size()]);
+        }
+    }
 
-	    // Return scaled image
-	    return bitmap;
-	}
+    public static void innerListFiles(Collection<File> files, File directory,
+            FileFilter filter) {
+        File[] found = directory.listFiles();
+        if (found != null) {
+            for (int i = 0; i < found.length; i++) {
+                if (found[i].isDirectory()) {
+                    innerListFiles(files, found[i], filter);
+                } else {
+                	File[] found2 = directory.listFiles((FileFilter) filter);
+                	for (int j = 0; j < found2.length; j++) {
+                		files.add(found2[j]);
+                	}
+                }
+            }
+        }
+    }
+    
 }
