@@ -34,160 +34,133 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.AdapterView.OnItemClickListener;
 
 public class SelectFolderActivity extends ListActivity {
 
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.select_folder_activity);
-		setResult(Activity.RESULT_CANCELED);
-		
-		ListView listView = getListView();
-		listView.setOnItemClickListener(new OnItemClickListener() {
-			@Override
-			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
-					long arg3) {
-				String folder = ((TextView)arg1.findViewById(R.id.text2))
-						.getText().toString();
-				Intent intent = new Intent().putExtra("folder", folder);
-				setResult(Activity.RESULT_OK, intent);
-				finish();
-			}
-		});
-
-		new SearchFoldersTask(this).execute();
-	}
-
-	public static final FileFilter ImageFilter = new FileFilter() {
-		public boolean accept(File dir) {
-			if (dir.isDirectory()) {
-				return false;
-			}
-
-			String name = dir.getName();
-			String ext = BitmapUtil.getExtension(name);
-
-			if (name.equalsIgnoreCase("albumart.jpg")) {
-				return false;
-			}
-
-			if (ext != null) {
-				if (ext.equals("jpg") || ext.equals("jpeg")
-						|| ext.equals("png") || ext.equals("gif")) {
-					return true;
-				} else {
-					return false;
-				}
-			}
-			return false;
-		}
-	};
-
-	private final FileFilter NoMediaFilter = new FileFilter() {
-		public boolean accept(File dir) {
-			if (dir.getName().equalsIgnoreCase(".nomedia")) {
-				return true;
-			}
-			return false;
-		}
-	};
-
-	private final FileFilter PhotoFolderFilter = new FileFilter() {
-		public boolean accept(File dir) {
-			if (!dir.isDirectory()) {
-				return false;
-			} else if (dir.getName().startsWith(".")) {
-				return false;
-			} else {
-				File[] files = dir.listFiles(NoMediaFilter);
-				if (files.length > 0) {
-					return false;
-				}
-			}
-			return true;
-		}
-	};
-
-	class SearchFoldersTask extends AsyncTask<Void, Void, String[]> {
+	private class SearchFoldersTask extends AsyncTask<Void, Void, String[]> {
 		Context mContext = null;
 		ProgressDialog mProgressDialog = null;
 
-		public SearchFoldersTask(Context context) {
+		public SearchFoldersTask(final Context context) {
 			mContext = context;
 		}
 
 		@Override
-		protected void onPreExecute() {
-			mProgressDialog = ProgressDialog.show(mContext, "Please wait",
-					"Searching folders, this can take some time to complete...", true);
-			mProgressDialog.setCancelable(true);
-		}
-
-		@Override
-		protected String[] doInBackground(Void... params) {
-			ArrayList<File> folders = new ArrayList<File>();
+		protected String[] doInBackground(final Void... params) {
+			// Search external storage for all public folders
+			final ArrayList<File> folders = new ArrayList<File>();
 			listDirectories(folders, Environment.getExternalStorageDirectory(),
-					PhotoFolderFilter);
+					mFolderFilter);
 
-			ArrayList<String> temp = new ArrayList<String>();
-			for (File f : folders) {
-				if (f.listFiles(ImageFilter).length > 0) {
-					temp.add(f.toString());
+			// Filter for folder only containing images
+			final ArrayList<String> result = new ArrayList<String>();
+			for (final File f : folders) {
+				if (f.listFiles(mImageFilter).length > 0) {
+					result.add(f.toString());
 				}
 			}
 
-			String[] result = new String[temp.size()];
-			for (int i = 0; i < temp.size(); i++) {
-				result[i] = temp.get(i);
-			}
+			final String[] temp = new String[result.size()];
+			result.toArray(temp);
+			return temp;
+		}
 
-			return result;
+		private void listDirectories(final Collection<File> files, final File directory,
+				final FileFilter filter) {
+			final File[] found = directory.listFiles(filter);
+			if (found != null) {
+				for (int i = 0; i < found.length; i++) {
+					files.add(found[i]);
+					if (found[i].isDirectory()) {
+						listDirectories(files, found[i], filter);
+					}
+				}
+			}
 		}
 
 		@Override
-		protected void onPostExecute(String[] result) {
+		protected void onPostExecute(final String[] result) {
 			if (mProgressDialog != null && mProgressDialog.isShowing()) {
 				mProgressDialog.dismiss();
 			}
 
 			if (result != null && result.length > 0) {
-				ListActivity activity = (ListActivity) mContext;
+				final ListActivity activity = (ListActivity) mContext;
 				activity.setListAdapter(new FolderArrayAdapter(mContext,
 						R.layout.select_folder_list_item, result));
 			} else {
-				AlertDialog.Builder builder = new AlertDialog.Builder(mContext)
-						.setTitle("No photos")
-						.setMessage(
-								"There were no folders containing photos found.")
-						.setNegativeButton("Cancel",
-								new DialogInterface.OnClickListener() {
-									@Override
-									public void onClick(DialogInterface dialog,
-											int which) {
-										dialog.cancel();
-										finish();
-									}
-								});
+				final AlertDialog.Builder builder = new AlertDialog.Builder(mContext)
+				.setTitle("No photos")
+				.setMessage("There were no folders containing photos found.")
+				.setNegativeButton("Cancel",
+						new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(final DialogInterface dialog,
+							final int which) {
+						dialog.cancel();
+						finish();
+					}
+				});
 				builder.show();
 			}
 		}
+
+		@Override
+		protected void onPreExecute() {
+			mProgressDialog = ProgressDialog.show(mContext, "Please wait",
+					"Searching folders, this can take some time to complete...",
+					true);
+			mProgressDialog.setCancelable(true);
+		}
 	}
 
-	public static void listDirectories(Collection<File> files, File directory,
-			FileFilter filter) {
-		File[] found = directory.listFiles((FileFilter) filter);
-		if (found != null) {
-			for (int i = 0; i < found.length; i++) {
-				files.add(found[i]);
-				if (found[i].isDirectory()) {
-					listDirectories(files, found[i], filter);
-				}
-			}
+	public static FileFilter mImageFilter = new FileFilter() {
+		public boolean accept(final File file) {
+			final String name = file.getName();
+			final String ext = BitmapUtil.getExtension(name);
+
+			if (ext == null)
+				return false;
+
+			if (!ext.equals("jpg") && !ext.equals("jpeg") && !ext.equals("png") && !ext.equals("gif"))
+				return false;
+
+			return !name.toLowerCase().equals("albumart.jpg");
 		}
+	};
+
+	private final FileFilter mFolderFilter = new FileFilter() {
+		public boolean accept(final File file) {
+			if (!file.isDirectory())
+				return false;
+			else if (file.getName().startsWith("."))
+				return false;
+			else
+				return !new File(file, ".nomedia").exists();
+		}
+	};
+
+	private final AdapterView.OnItemClickListener mItemClickListener = new AdapterView.OnItemClickListener() {
+		@Override
+		public void onItemClick(final AdapterView<?> arg0, final View arg1, final int arg2, final long arg3) {
+			final TextView text2 = (TextView)arg1.findViewById(R.id.text2);
+			final Intent intent = new Intent();
+			intent.putExtra("folder", text2.getText().toString());
+			setResult(Activity.RESULT_OK, intent);
+			finish();
+		}
+	};
+
+	@Override
+	protected void onCreate(final Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.select_folder_activity);
+		setResult(Activity.RESULT_CANCELED);
+
+		getListView().setOnItemClickListener(mItemClickListener);
+
+		new SearchFoldersTask(this).execute();
 	}
 
 }

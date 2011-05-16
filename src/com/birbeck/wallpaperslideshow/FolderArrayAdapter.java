@@ -29,72 +29,70 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 public class FolderArrayAdapter extends ArrayAdapter<String> {
-	
-	private static boolean mHasThumbnailUtils;
-	static {
-		try {
-			ThumbnailUtilsWrapper.checkAvailable();
-			mHasThumbnailUtils = true;
-		} catch (Throwable t) {
-			mHasThumbnailUtils = false;
-		}
-	}
-
-	private final LayoutInflater mInflater;
-	private final String[] mFolders;
-
-	public FolderArrayAdapter(Context context, int layout,
-			String[] folders) {
-		super(context, layout, folders);
-		this.mInflater = LayoutInflater.from(context);
-		this.mFolders = folders;
-	}
-
-	@Override
-	public View getView(int position, View view, ViewGroup parent) {
-		if (view == null) {
-			view = mInflater.inflate(R.layout.select_folder_list_item, null);
-			new CachedView(view);
-		}
-
-		CachedView cache = (CachedView)view.getTag();
-
-		String folder = mFolders[position];
-		if (folder != null) {
-			cache.image.setImageResource(android.R.drawable.ic_menu_gallery);
-			cache.text1.setText(new File(folder).getName());
-			cache.text2.setText(folder);
-			try {
-				File[] images = new File(folder).listFiles(SelectFolderActivity.ImageFilter);
-				if (images.length > 0) {
-					cache.text1.setText(new File(folder).getName() + " (" + images.length + ")");
-					Bitmap bitmap = BitmapUtil.makeBitmap(75, 10000,
-							images[0].getAbsolutePath(), null);
-					if (mHasThumbnailUtils) {
-						bitmap = ThumbnailUtilsWrapper.extractThumbnail(
-								bitmap, 75, 75);
-					} else {
-						bitmap = BitmapUtil.transform(null, bitmap, 75, 75, false, true);
-					}
-					cache.image.setImageBitmap(bitmap);
-				}
-			} catch (Exception e) { }
-		}
-
-		return view;
-	}
 
 	private class CachedView {
 		public ImageView image;
 		public TextView text1;
 		public TextView text2;
 
-		public CachedView(View v) {
+		public CachedView(final View v) {
 			image = (ImageView) v.findViewById(R.id.image);
 			text1 = (TextView) v.findViewById(R.id.text1);
 			text2 = (TextView) v.findViewById(R.id.text2);
 			v.setTag(this);
 		}
+	}
+
+	private static boolean mHasThumbnailUtils;
+	static {
+		try {
+			ThumbnailUtilsWrapper.checkAvailable();
+			mHasThumbnailUtils = true;
+		} catch (final Throwable t) {
+			mHasThumbnailUtils = false;
+		}
+	}
+
+	private final LayoutInflater mInflater;
+
+	private final String[] mFolders;
+
+	public FolderArrayAdapter(final Context context, final int layout, final String[] folders) {
+		super(context, layout, folders);
+		this.mInflater = LayoutInflater.from(context);
+		this.mFolders = folders;
+	}
+
+	@Override
+	public View getView(final int position, View view, final ViewGroup parent) {
+		if (view == null) {
+			view = mInflater.inflate(R.layout.select_folder_list_item, null);
+			new CachedView(view);
+		}
+
+		final CachedView cache = (CachedView)view.getTag();
+
+		final String folder = mFolders[position];
+		if (folder != null) {
+			cache.image.setImageResource(android.R.drawable.ic_menu_gallery);
+			cache.text1.setText(new File(folder).getName());
+			cache.text2.setText(folder);
+			try {
+				final File[] images = new File(folder).listFiles(SelectFolderActivity.mImageFilter);
+				if (images.length > 0) {
+					cache.text1.setText(new File(folder).getName() + " (" + images.length + ")");
+					Bitmap bitmap = BitmapUtil.makeBitmap(75, 10000, images[0].getAbsolutePath(), null);
+					if (mHasThumbnailUtils) {
+						bitmap = ThumbnailUtilsWrapper.extractThumbnail(bitmap, 75, 75);
+					} else {
+						bitmap = BitmapUtil.transform(null, bitmap, 75, 75, false, true);
+					}
+					cache.image.setImageBitmap(bitmap);
+				}
+			} catch (final Exception e) { }
+		}
+
+		return view;
 	};
-	
+
 }
